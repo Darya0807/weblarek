@@ -98,3 +98,152 @@ Presenter - презентер содержит основную логику п
 `emit<T extends object>(event: string, data?: T): void` - инициализация события. При вызове события в метод передается название события и объект с данными, который будет использован как аргумент для вызова обработчика.  
 `trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void` - возвращает функцию, при вызове которой инициализируется требуемое в параметрах событие с передачей в него данных из второго параметра.
 
+### Данные
+
+#### Интерфейсы данных
+
+##### Товар (IProduct)
+Описывает структуру товара в каталоге.
+
+```
+interface IProduct {
+  id: string;
+  description: string;
+  image: string;
+  title: string;
+  category: string;
+  price: number | null;
+}
+```
+
+##### Покупатель (IBuyer)
+Описывает данные покупателя, необходимые для оформления заказа.
+
+``` 
+interface IBuyer {
+  payment: TPayment;
+  email: string;
+  phone: string;
+  address: string;
+} 
+```
+
+Тип способа оплаты:
+`type TPayment = 'card' | 'cash' | null;`
+
+##### Результат валидации (ValidationErrors)
+Описывает структуру объекта с ошибками валидации данных покупателя.
+
+```
+type ValidationErrors = {
+  payment?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+}
+```
+
+##### Ответ сервера (IApiProductResponse)
+Описывает структуру ответа сервера при запросе каталога товаров.
+
+```
+interface IApiProductResponse {
+  total: number; // Общее количество товаров
+  items: IProduct[]; // Массив товаров
+}
+```
+
+##### Заказ (IOrderData)
+Описывает структуру данных, отправляемых на сервер для оформления заказа.
+
+```
+interface IOrderData {
+    payment: TPayment;
+    email: string;
+    phone: string;
+    address: string;
+    total: number;
+    items: string[];
+}
+```
+
+##### Ответ сервера (IOrderResponse)
+Описывает структуру данных, получаемых при успешном оформлении заказа
+
+```
+interface IOrderResponse {
+  id: string;
+  total: number;
+}
+```
+
+### Модели данных
+
+#### Класс ProductList
+Хранит товары, которые можно купить в приложении.
+
+Конструктор:  
+`constructor()` - не принимает параметров, инициализирует пустые данные.
+
+Поля класса:  
+`products: IProduct[]` - массив всех товаров в каталоге (пустой массив по умолчанию).   
+`selectedProducts: IProduct | null` - товар, выбранный для подробного отображения (null по умолчанию).
+
+Методы:  
+`setProducts(products: IProduct[]): void` - сохраняет переданный массив товаров.
+`getProducts(): IProduct[]` - возвращает массив всех товаров.
+`getProductById(productId: string): IProduct | undefined` - возвращает товар по его ID или undefined, если товар не найден.
+`setSelectedProduct(product: IProduct | null): void` - сохраняет товар, выбранный для подробного отображения.
+`getSelectedProduct(): IProduct | null` - возвращает товар, выбранный для подробного отображения.
+
+#### Класс Basket
+Хранит товары, которые пользователь выбрал для покупки.
+
+Конструктор:  
+`constructor()` - не принимает параметров, инициализирует пустую корзину.
+
+Поля класса:  
+`items: IProduct[]` - массив товаров, выбранных покупателем для покупки (пустой массив по умолчанию).   
+
+Методы:  
+`getItems(): IProduct[]` - получает массив товаров, которые находятся в корзине.
+`addItem(item: IProduct): void` - добавляет товар в массив корзины.
+`deleteItem(item: IProduct): void` - удаляет товар из массива корзины.
+`clearBasket(): void` - очищает корзину.
+`getTotalSum(): number` - возвращает общую стоимость всех товаров в корзине.
+`getTotalAmount(): number` - возвращает количество товаров в корзине.
+`contains(itemId: string): boolean` - проверяет наличие товара в корзине по его id.
+
+#### Класс Buyer
+Хранит данные покупателя, которые необходимо указать при оформлении заказа.
+
+Конструктор:  
+`constructor()` - не принимает параметров, инициализирует пустые данные.
+
+Поля класса:  
+`payment: TPayment` - способ оплаты.
+`email: string` - электронная почта.
+`phone: string` - номер телефона.
+`address: string` - адрес доставки.  
+
+Методы:  
+`setData(data: Partial<IBuyer>): void` - сохраняет переданные данные.
+`getData(): IBuyer` - возвращает данные покупателя.
+`clearData(): void` - очищает все данные покупателя.
+`validate(): ValidationErrors` - выполняет валидацию данных и возвращает объект с ошибками.
+
+### Слой коммуникации
+
+#### Класс WeblarekApi
+Отвечает за взаимодействие с сервером магазина.
+Использует композицию, чтобы выполнять запросы на сервер с помощью методов`get` и `post` класса Api.
+
+Конструктор:  
+`constructor(api: IApi)` - В конструктор передается объект, реализующий интерфейс `IApi`.
+
+Поля класса:  
+`api: IApi` - экземпляр класса для выполнения HTTP-запросов.
+
+Методы:  
+`getProducts(): Promise<IProduct[]>` - делает get-запрос на эндпоинт /product/ и возвращает массив товаров.
+`postOrder(order: IOrderData): Promise<IOrderResponse>` - выполняет POST-запрос на эндпоинт /order/ и передаёт в него данные, полученные в параметрах метода, и возвращает результат.
