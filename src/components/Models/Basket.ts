@@ -1,7 +1,13 @@
 import { IProduct } from "../../types/index";
+import { IEvents } from "../base/Events";
 
 export class Basket {
   protected items: IProduct[] = [];
+
+  constructor(protected events: IEvents) {}
+
+  // CRUD
+  // create - read - update - delete
 
   getItems(): IProduct[] {
     return this.items;
@@ -12,6 +18,7 @@ export class Basket {
       console.log(`Товар ${item.title} недоступен для покупки`);
     } else {
       this.items.push(item);
+      this.events.emit("basket:changed", { items: this.items });
     }
   }
 
@@ -19,11 +26,13 @@ export class Basket {
     const index = this.items.findIndex((i) => i.id === item.id);
     if (index !== -1) {
       this.items.splice(index, 1);
+      this.events.emit("basket:changed", { items: this.items });
     }
   }
 
   clearBasket(): void {
     this.items = [];
+    this.events.emit("basket:changed", { items: this.items });
   }
 
   getTotalSum(): number {
